@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>مصحف ورش</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="مصحف ورش">
+<meta name="theme-color" content="#0f3d2e">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+@font-face{font-family:"Warsh";src:url("warsh.10.woff2") format("woff2");font-display:block}
+:root{--bg:#f7f3ea;--card:#fffdf7;--ink:#1d2a24;--muted:#6b7a70;--accent:#0f3d2e;--gold:#b08a3e;--hl:#f1e2b8;--line:#e6dfcf}
+.dark{--bg:#0e1512;--card:#16201b;--ink:#ece6d6;--muted:#93a39a;--accent:#7cc4a2;--gold:#d4b26a;--hl:#2c3a2a;--line:#26332c}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"SF Arabic","Geeza Pro",system-ui,sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--accent);color:#fff;padding:calc(env(safe-area-inset-top) + 10px) 14px 10px;display:flex;align-items:center;gap:10px}
+.dark header{background:#102a20}
+header h1{font-size:18px;margin:0;flex:1;font-weight:600}
+header button{background:rgba(255,255,255,.15);color:#fff;border:0;border-radius:10px;height:36px;min-width:36px;padding:0 10px;font-size:15px}
+main{padding:12px 12px calc(env(safe-area-inset-bottom) + 150px)}
+.search{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:16px;margin-bottom:10px}
+.cont{display:none;background:var(--card);border:1px solid var(--gold);border-radius:12px;padding:12px 14px;margin-bottom:10px;font-size:15px}
+.sura{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.num{width:38px;height:38px;flex:none;border-radius:50%;border:2px solid var(--gold);display:grid;place-items:center;font-size:14px;font-weight:600;color:var(--accent)}
+.sname{font-family:"Warsh",serif;font-size:24px;line-height:1.3}
+.smeta{font-size:12px;color:var(--muted);direction:ltr;text-align:right}
+.reader-title{text-align:center;margin:6px 0 10px}
+.reader-title .sname{font-size:34px;color:var(--accent)}
+.basmala{font-family:"Warsh",serif;text-align:center;font-size:28px;margin:4px 0 14px;color:var(--ink)}
+.text{font-family:"Warsh",serif;font-size:var(--fs,30px);line-height:2.15;text-align:justify;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.aya{border-radius:8px;padding:0 2px;transition:background .2s}
+.aya.on{background:var(--hl)}
+.note{font-size:12px;color:var(--muted);text-align:center;margin:8px 0}
+.player{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--card);border-top:1px solid var(--line);padding:10px 14px calc(env(safe-area-inset-bottom) + 10px);box-shadow:0 -6px 20px rgba(0,0,0,.08)}
+.prow{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ctl{display:flex;gap:10px;align-items:center;direction:ltr}
+.ctl button{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:18px}
+.ctl .play{width:56px;height:56px;background:var(--accent);color:#fff;border:0;font-size:22px}
+.dark .ctl .play{color:#0e1512}
+.info{font-size:13px;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.info b{color:var(--ink);font-weight:600}
+select{font-size:14px;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);max-width:100%}
+.opts{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--muted)}
+.chip{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:6px 10px;font-size:13px}
+.chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.sheet{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;z-index:10;align-items:flex-end}
+.sheet .box{background:var(--card);width:100%;border-radius:18px 18px 0 0;padding:18px 16px calc(env(safe-area-inset-bottom) + 18px)}
+.sheet h3{margin:0 0 12px}
+.srow{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);gap:10px}
+.srow:last-child{border:0}
+.srow input[type=range]{width:55%}
+.w{border-radius:6px;transition:background .2s,color .2s}
+.w.ok{color:#1f7a4d}
+.dark .w.ok{color:#7cd3a5}
+.w.near{background:rgba(230,160,40,.28)}
+.w.bad{background:rgba(214,60,60,.25);color:#b32020}
+.dark .w.bad{color:#ff8a8a}
+.w.miss{background:rgba(214,60,60,.12);text-decoration:underline wavy #d33;text-underline-offset:10px}
+.w.cur{box-shadow:inset 0 -3px 0 var(--gold)}
+.hidewords .w:not(.ok):not(.near):not(.bad):not(.miss){color:transparent;background:var(--line)}
+.rbar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:0 0 10px}
+.mic{background:#b32020!important;color:#fff!important;border-color:#b32020!important}
+.mic.live{animation:pulse 1.2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(179,32,32,.5)}100%{box-shadow:0 0 0 14px rgba(179,32,32,0)}}
+.rpanel{display:none;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px;font-size:14px}
+.rpanel .heard{font-size:18px;color:var(--muted);min-height:26px;margin-top:4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;direction:rtl}
+.score{display:flex;gap:14px;font-weight:600}
+.pop{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 130px);z-index:8;background:var(--card);border:1px solid var(--gold);border-radius:14px;padding:12px 14px;box-shadow:0 10px 30px rgba(0,0,0,.2);display:none;font-size:15px}
+.pop .big{font-family:"Warsh",serif;font-size:28px}
+.pop .btns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<header>
+  <button id="back" style="display:none" aria-label="رجوع">›</button>
+  <h1 id="title">مصحف ورش عن نافع</h1>
+  <button id="settingsBtn" aria-label="الإعدادات">⚙︎</button>
+</header>
+
+<main>
+  <section id="home">
+    <div class="cont" id="cont"></div>
+    <input class="search" id="q" placeholder="ابحث عن سورة… (الاسم أو الرقم)" autocomplete="off">
+    <div id="list"></div>
+  </section>
+  <section id="reader" style="display:none">
+    <div class="reader-title"><div class="sname" id="rName"></div><div class="smeta" id="rMeta"></div></div>
+    <div class="rbar">
+      <button class="chip mic" id="micBtn">🎤 ابدأ التسميع</button>
+      <button class="chip" id="hideBtn">🙈 إخفاء النص</button>
+      <button class="chip" id="resetBtn">↺ من البداية</button>
+    </div>
+    <div class="rpanel" id="rpanel">
+      <div class="score"><span style="color:#1f7a4d">✓ <span id="sOk">٠</span></span><span style="color:#c98a12">⚠ <span id="sNear">٠</span></span><span style="color:#b32020">✗ <span id="sBad">٠</span></span><span id="rStatus" style="font-weight:400;color:var(--muted)"></span></div>
+      <div class="heard" id="heard"></div>
+    </div>
+    <div class="basmala" id="basmala">بِسْمِ اِ۬للَّهِ اِ۬لرَّحْمَٰنِ اِ۬لرَّحِيمِ</div>
+    <div class="text" id="text"></div>
+    <div class="note" id="syncNote"></div>
+  </section>
+</main>
+
+<div class="player" id="player">
+  <div class="prow">
+    <div class="info" id="pinfo"><b>اختر سورة</b></div>
+    <div class="ctl">
+      <button id="prev" aria-label="السابق">⏮</button>
+      <button id="play" class="play" aria-label="تشغيل">▶</button>
+      <button id="next" aria-label="التالي">⏭</button>
+    </div>
+  </div>
+  <div class="opts">
+    <select id="reciter"></select>
+    <button class="chip" id="rep" title="تكرار الآية">🔁 الآية ×<span id="repN">1</span></button>
+    <button class="chip" id="loopS" title="تكرار السورة">🔂 السورة</button>
+  </div>
+</div>
+
+<div class="sheet" id="sheet"><div class="box">
+  <h3>الإعدادات</h3>
+  <div class="srow"><span>حجم الخط</span><input type="range" id="fs" min="20" max="48" step="1"></div>
+  <div class="srow"><span>الوضع الليلي</span><button class="chip" id="darkBtn">تبديل</button></div>
+  <div class="srow"><span>متابعة تلقائية للسورة التالية</span><button class="chip" id="autoNext">تشغيل</button></div>
+  <div class="srow"><span>سرعة التلاوة</span><select id="rate"><option>0.75</option><option selected>1</option><option>1.25</option><option>1.5</option></select></div>
+  <div class="note">النص: مجمع الملك فهد لطباعة المصحف الشريف (رواية ورش عن نافع) · الصوت: everyayah.com</div>
+  <div class="srow"><span></span><button class="chip" id="closeSheet">إغلاق</button></div>
+</div></div>
+
+<div class="pop" id="pop"></div>
+<audio id="au" preload="auto"></audio>
+<script src="quran-data.js"></script>
+<script>
+"use strict";
+// Hafs (Kufan) ayah counts — everyayah serves its Warsh sets on this grid.
+const HAFS=[7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,19,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6];
+const RECITERS=[
+  {id:"warsh/warsh_ibrahim_aldosary_128kbps",name:"إبراهيم الدوسري"},
+  {id:"warsh/warsh_yassin_al_jazaery_64kbps",name:"ياسين الجزائري"},
+  {id:"warsh/warsh_Abdul_Basit_128kbps",name:"عبد الباسط عبد الصمد"}
+];
+const BASE="https://everyayah.com/data/";
+const Q=window.QURAN;
+const $=id=>document.getElementById(id);
+const store={get(k,d){try{const v=localStorage.getItem("warsh:"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem("warsh:"+k,JSON.stringify(v))}catch(e){}}};
+const toAr=n=>String(n).replace(/\d/g,d=>"٠١٢٣٤٥٦٧٨٩"[d]);
+
+const st={sura:null,seq:[],pos:0,repN:store.get("repN",1),repLeft:0,loopS:store.get("loopS",false),
+  auto:store.get("auto",true),reciter:store.get("reciter",RECITERS[0].id),playing:false};
+
+// ---------- Surah list ----------
+function renderList(f=""){
+  f=f.trim();
+  const norm=s=>s.replace(/[ً-ٰٟۖ-ۭـ]/g,"").replace(/[أإآٱ]/g,"ا");
+  const nf=norm(f).toLowerCase();
+  const html=[];
+  Q.forEach((s,i)=>{
+    const n=i+1;
+    if(f && !(String(n)===f || norm(s.ar).includes(nf) || s.en.toLowerCase().includes(nf))) return;
+    html.push(`<div class="sura" data-n="${n}"><div class="num">${toAr(n)}</div><div style="flex:1"><div class="sname">سُورَةُ ${s.ar}</div><div class="smeta">${s.en} · ${s.a.length} āyāt · juz' ${s.j} · p. ${s.p}</div></div></div>`);
+  });
+  $("list").innerHTML=html.join("")||'<div class="note">لا توجد نتائج</div>';
+}
+$("list").addEventListener("click",e=>{const el=e.target.closest(".sura");if(el)openSura(+el.dataset.n,true)});
+$("q").addEventListener("input",e=>renderList(e.target.value));
+
+function showContinue(){
+  const last=store.get("last",null);
+  const c=$("cont");
+  if(last&&Q[last.s-1]){c.style.display="block";c.innerHTML=`📖 متابعة: <b class="sname" style="font-size:20px">${Q[last.s-1].ar}</b>`;c.onclick=()=>openSura(last.s,true)}
+}
+
+// ---------- Reader ----------
+function synced(n){return n!==1 && Q[n-1].a.length===HAFS[n-1]}
+function openSura(n,push){
+  if(typeof R!=="undefined"&&R.on)stopRecite();
+  $("pop").style.display="none";$("rpanel").style.display="none";$("micBtn").textContent="🎤 ابدأ التسميع";
+  st.sura=n;const s=Q[n-1];
+  $("home").style.display="none";$("reader").style.display="block";$("back").style.display="";
+  $("title").textContent="سورة "+s.ar.replace(/[ً-ٰٟ]/g,"");
+  $("rName").textContent="سُورَةُ "+s.ar;
+  $("rMeta").textContent=`${s.en} · ${s.a.length} āyāt · juz' ${s.j}`;
+  $("basmala").style.display=(n===9)?"none":"";
+  renderWords(s);
+  $("syncNote").textContent=synced(n)?"اضغط على أي آية لبدء التلاوة منها":"عدّ الآي في هذه السورة (المدني) يختلف عن ترقيم ملفات الصوت، لذلك لا يُظلَّل موضع التلاوة آيةً بآية.";
+  window.scrollTo(0,0);
+  store.set("last",{s:n});
+  if(push) history.pushState({s:n,pushed:true},"","#s"+n);
+  buildSeq();updateInfo();
+}
+function goHome(){
+  $("reader").style.display="none";$("home").style.display="block";$("back").style.display="none";
+  $("title").textContent="مصحف ورش عن نافع";showContinue();
+}
+$("back").onclick=()=>{if(history.state&&history.state.pushed)history.back();else{history.replaceState({},"",location.pathname);goHome()}};
+window.addEventListener("popstate",e=>{if(e.state&&e.state.s)openSura(e.state.s,false);else goHome()});
+$("text").addEventListener("click",e=>{
+  const w=e.target.closest(".w");
+  if(w&&(R.on||R.marks[+w.dataset.g])){showPop(+w.dataset.g);return}
+  const a=e.target.closest(".aya");if(!a||!synced(st.sura))return;
+  const i=+a.dataset.i; // ayah index -> seq position (seq[0] is basmala when present)
+  const p=st.seq.findIndex(x=>x.ayah===i+1);
+  if(p>=0){st.pos=p;st.repLeft=st.repN;playCurrent()}
+});
+
+// ---------- Audio ----------
+const au=$("au");
+const pad=n=>String(n).padStart(3,"0");
+function buildSeq(){
+  const n=st.sura,seq=[];
+  if(n!==1&&n!==9) seq.push({file:"001001",ayah:0});
+  for(let a=1;a<=HAFS[n-1];a++) seq.push({file:pad(n)+pad(a),ayah:a});
+  st.seq=seq;st.pos=0;st.repLeft=st.repN;
+  stop();
+}
+function urlFor(item){return BASE+st.reciter+"/"+item.file+".mp3"}
+function playCurrent(){
+  const it=st.seq[st.pos];if(!it)return;
+  au.src=urlFor(it);au.playbackRate=+$("rate").value;
+  au.play().then(()=>{st.playing=true;setPlayIcon()}).catch(()=>{st.playing=false;setPlayIcon()});
+  highlight();updateInfo();
+  // prefetch next
+  const nx=st.seq[st.pos+1];if(nx){const l=new Audio();l.preload="auto";l.src=urlFor(nx)}
+}
+function stop(){au.pause();st.playing=false;setPlayIcon();highlight(true)}
+function highlight(clear){
+  document.querySelectorAll(".aya.on").forEach(x=>x.classList.remove("on"));
+  if(clear||!synced(st.sura))return;
+  const it=st.seq[st.pos];if(!it||!it.ayah)return;
+  const el=document.querySelector(`.aya[data-i="${it.ayah-1}"]`);
+  if(el){el.classList.add("on");el.scrollIntoView({behavior:"smooth",block:"center"})}
+}
+function updateInfo(){
+  if(!st.sura){return}
+  const s=Q[st.sura-1],it=st.seq[st.pos];
+  const r=RECITERS.find(x=>x.id===st.reciter);
+  const seg=it&&it.ayah?`الآية ${toAr(it.ayah)}`:"البسملة";
+  $("pinfo").innerHTML=`<b>${s.ar}</b> · ${seg}${synced(st.sura)?"":" (مقطع)"} · ${r?r.name:""}`;
+  if("mediaSession" in navigator){
+    try{navigator.mediaSession.metadata=new MediaMetadata({title:"سورة "+s.ar+" — "+seg,artist:r?r.name:"",album:"رواية ورش عن نافع",artwork:[{src:"icon-512.png",sizes:"512x512",type:"image/png"}]})}catch(e){}
+  }
+}
+function setPlayIcon(){$("play").textContent=st.playing?"⏸":"▶"}
+au.addEventListener("ended",()=>{
+  if(st.repLeft>1){st.repLeft--;playCurrent();return}
+  st.repLeft=st.repN;
+  if(st.pos<st.seq.length-1){st.pos++;playCurrent();return}
+  if(st.loopS){st.pos=0;playCurrent();return}
+  if(st.auto&&st.sura<114){openSura(st.sura+1,true);st.pos=0;playCurrent();return}
+  stop();
+});
+au.addEventListener("error",()=>{st.playing=false;setPlayIcon();$("pinfo").innerHTML="<b>تعذّر تحميل الصوت</b> — تحقق من الاتصال بالإنترنت"});
+$("play").onclick=()=>{
+  if(!st.sura){openSura(1,true)}
+  if(st.playing){au.pause();st.playing=false;setPlayIcon();return}
+  if(au.src&&au.currentTime>0&&!au.ended){au.play().then(()=>{st.playing=true;setPlayIcon()}).catch(()=>{});return}
+  playCurrent();
+};
+// RTL thinking: "next" = forward in the surah
+$("next").onclick=()=>{if(!st.sura)return;if(st.pos<st.seq.length-1){st.pos++;st.repLeft=st.repN;playCurrent()}};
+$("prev").onclick=()=>{if(!st.sura)return;if(st.pos>0){st.pos--;st.repLeft=st.repN;playCurrent()}};
+if("mediaSession" in navigator){
+  try{
+    navigator.mediaSession.setActionHandler("play",()=>$("play").click());
+    navigator.mediaSession.setActionHandler("pause",()=>{au.pause();st.playing=false;setPlayIcon()});
+    navigator.mediaSession.setActionHandler("nexttrack",()=>$("next").click());
+    navigator.mediaSession.setActionHandler("previoustrack",()=>$("prev").click());
+  }catch(e){}
+}
+
+// ---------- Options ----------
+$("reciter").innerHTML=RECITERS.map(r=>`<option value="${r.id}">${r.name}</option>`).join("");
+$("reciter").value=st.reciter;
+$("reciter").onchange=e=>{st.reciter=e.target.value;store.set("reciter",st.reciter);if(st.playing)playCurrent();else updateInfo()};
+const reps=[1,3,5,10];
+function setRep(){$("repN").textContent=toAr(st.repN);$("rep").classList.toggle("on",st.repN>1)}
+$("rep").onclick=()=>{st.repN=reps[(reps.indexOf(st.repN)+1)%reps.length];st.repLeft=st.repN;store.set("repN",st.repN);setRep()};
+function setLoop(){$("loopS").classList.toggle("on",st.loopS)}
+$("loopS").onclick=()=>{st.loopS=!st.loopS;store.set("loopS",st.loopS);setLoop()};
+$("rate").onchange=e=>{au.playbackRate=+e.target.value;store.set("rate",e.target.value)};
+$("rate").value=store.get("rate","1");
+
+// settings sheet
+const fs=store.get("fs",30);
+document.documentElement.style.setProperty("--fs",fs+"px");$("fs").value=fs;
+$("fs").oninput=e=>{document.documentElement.style.setProperty("--fs",e.target.value+"px");store.set("fs",+e.target.value)};
+if(store.get("dark",window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches))document.documentElement.classList.add("dark");
+$("darkBtn").onclick=()=>{const on=document.documentElement.classList.toggle("dark");store.set("dark",on)};
+function setAuto(){$("autoNext").classList.toggle("on",st.auto);$("autoNext").textContent=st.auto?"مفعّل":"متوقف"}
+$("autoNext").onclick=()=>{st.auto=!st.auto;store.set("auto",st.auto);setAuto()};
+$("settingsBtn").onclick=()=>$("sheet").style.display="flex";
+$("closeSheet").onclick=()=>$("sheet").style.display="none";
+$("sheet").onclick=e=>{if(e.target.id==="sheet")$("sheet").style.display="none"};
+
+
+// ================= Recitation checking (التسميع) =================
+// Normalisation: KFGQPC Warsh orthography and speech-recogniser output are reduced to
+// comparable letter skeletons. "strict" keeps long-alef information, "loose" drops all alefs.
+function strictForm(t){
+  t=t.replace(/[ےۓ]/g,"ي")            // Maghrebi final ya ے → ي
+     .replace(/[ويى]ٰ/g,"ا") // و/ي/ى carrying dagger alef read as alef
+     .replace(/ٰ/g,"ا")                       // dagger alef → alef
+     .replace(/[ٱآأإ]/g,"ا")   // alef variants
+     .replace(/ؤ/g,"و").replace(/ئ/g,"ي")
+     .replace(/ى/g,"ا").replace(/ة/g,"ه");
+  t=t.replace(/[^ء-غف-ي]/g,"");     // keep bare letters only
+  return t.replace(/ء/g,"");                      // hamza (ibdal/tashil-neutral)
+}
+const looseForm=t=>t.replace(/ا/g,"");
+function lev(a,b){
+  if(a===b)return 0;const m=a.length,n=b.length;if(!m)return n;if(!n)return m;
+  let p=Array.from({length:n+1},(_,j)=>j);
+  for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c}
+  return p[n];
+}
+// 2 = correct, 1 = close (check it), 0 = no match
+function cmp(h,e){
+  if(!h||!e)return 0;
+  if(h.loose===e.loose){
+    // heard an extra long alef where Warsh has none (e.g. مالك vs Warsh مَلِكِ) → flag
+    return (h.strict.length>e.strict.length)?1:2;
+  }
+  const d=lev(h.loose,e.loose);
+  if(d===1&&e.loose.length>=3)return 1;
+  return 0;
+}
+const tok=t=>{const st=strictForm(t);return {raw:t,strict:st,loose:looseForm(st)}};
+
+function renderWords(s){
+  const W=[];let html="";
+  s.a.forEach((t,i)=>{
+    const parts=t.replace(/ /g," ").replace(/‏/g,"").split(/\s+/).filter(Boolean);
+    html+=`<span class="aya" data-i="${i}">`;
+    parts.forEach(p=>{
+      const tk=tok(p);
+      if(!tk.loose&&!tk.strict){html+=p+" ";return}
+      tk.ayah=i+1;W.push(tk);
+      html+=`<span class="w" data-g="${W.length-1}">${p}</span> `;
+    });
+    html+="</span> ";
+  });
+  $("text").innerHTML=html;
+  R.words=W;resetRecite();
+}
+
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+const R={on:false,rec:null,words:[],marks:[],heardFor:[],base:{ptr:0,marks:[],heardFor:[]},ptr:0,restarts:0};
+function resetRecite(from=0){
+  R.marks=R.marks.slice(0,from);R.heardFor=R.heardFor.slice(0,from);
+  if(from===0){R.marks=[];R.heardFor=[]}
+  R.ptr=from;R.base={ptr:from,marks:R.marks.slice(),heardFor:R.heardFor.slice()};
+  paintMarks();$("heard").textContent="";
+}
+function align(heardText){
+  const H=heardText.split(/\s+/).filter(Boolean).map(tok).filter(x=>x.loose||x.strict);
+  const E=R.words,marks=R.base.marks.slice(),hf=R.base.heardFor.slice();
+  let p=R.base.ptr,i=0;
+  const mark=(k,v,h)=>{marks[k]=v;hf[k]=h||""};
+  while(i<H.length&&p<E.length){
+    const h=H[i],h2=H[i+1];
+    let c=cmp(h,E[p]);
+    if(c){mark(p,c===2?"ok":"near",h.raw);p++;i++;continue}
+    if(h2){const j=tok(h.raw+h2.raw);c=cmp(j,E[p]);if(c){mark(p,c===2?"ok":"near",h.raw+" "+h2.raw);p++;i+=2;continue}}
+    if(h2&&cmp(h2,E[p])===2){i++;continue}                       // recogniser inserted a stray word
+    if(p>0&&cmp(h,E[p-1])===2){i++;continue}                     // reciter repeated the previous word
+    let jumped=false;
+    for(let k=1;k<=3&&p+k<E.length;k++){
+      if(cmp(h,E[p+k])===2){for(let m=p;m<p+k;m++)mark(m,"miss","");mark(p+k,"ok",h.raw);p+=k+1;i++;jumped=true;break}
+    }
+    if(jumped)continue;
+    if(!h2)break;                                                // last word may still be changing — wait
+    mark(p,"bad",h.raw);p++;i++;
+  }
+  R.marks=marks;R.heardFor=hf;R.ptr=p;
+  paintMarks();
+  if(p>=E.length&&R.on){stopRecite();$("rStatus").textContent="أحسنت — انتهت السورة"}
+}
+function paintMarks(){
+  const els=$("text").querySelectorAll(".w");let ok=0,near=0,bad=0;
+  els.forEach((el,k)=>{
+    const m=R.marks[k];el.className="w"+(m?" "+m:"")+(R.on&&k===R.ptr?" cur":"");
+    if(m==="ok")ok++;else if(m==="near")near++;else if(m)bad++;
+  });
+  $("sOk").textContent=toAr(ok);$("sNear").textContent=toAr(near);$("sBad").textContent=toAr(bad);
+  if(R.on){const c=els[R.ptr];if(c){const r=c.getBoundingClientRect();if(r.top<120||r.bottom>innerHeight-180)c.scrollIntoView({behavior:"smooth",block:"center"})}}
+}
+function startRecite(){
+  if(!SR){showMsg("التعرف على الصوت غير متاح في هذا المتصفح. افتح التطبيق في Safari (iOS 14.5 أو أحدث) وتأكد من تفعيل Siri والإملاء من الإعدادات.");return}
+  if(st.playing){au.pause();st.playing=false;setPlayIcon()}
+  R.on=true;$("rpanel").style.display="block";
+  $("micBtn").textContent="⏹ إيقاف";$("micBtn").classList.add("live");
+  $("rStatus").textContent="أستمع… اقرأ بصوت واضح";
+  R.base={ptr:R.ptr,marks:R.marks.slice(),heardFor:R.heardFor.slice()};
+  listen();paintMarks();
+}
+function listen(){
+  const rec=new SR();R.rec=rec;
+  rec.lang="ar-SA";rec.continuous=true;rec.interimResults=true;rec.maxAlternatives=1;
+  rec.onresult=ev=>{
+    let txt="";for(let k=0;k<ev.results.length;k++)txt+=ev.results[k][0].transcript+" ";
+    const words=txt.trim().split(/\s+/);$("heard").textContent=words.slice(-8).join(" ");
+    align(txt);
+  };
+  rec.onerror=ev=>{
+    if(ev.error==="not-allowed"||ev.error==="service-not-allowed"){
+      stopRecite();showMsg("لم يُسمح باستخدام الميكروفون أو التعرف على الكلام. في iPhone: الإعدادات ← Safari ← الميكروفون (سماح)، وفعّل Siri والإملاء من الإعدادات ← عام ← لوحة المفاتيح.");
+    }
+  };
+  rec.onend=()=>{
+    if(!R.on)return;
+    // keep what has been confirmed, then resume listening (iOS ends sessions after pauses)
+    R.base={ptr:R.ptr,marks:R.marks.slice(),heardFor:R.heardFor.slice()};
+    try{rec.start()}catch(e){try{listen()}catch(_){stopRecite()}}
+  };
+  try{rec.start()}catch(e){stopRecite();showMsg("تعذّر تشغيل الميكروفون.")}
+}
+function stopRecite(){
+  R.on=false;if(R.rec){try{R.rec.onend=null;R.rec.stop()}catch(e){}}
+  $("micBtn").textContent="🎤 تابع التسميع";$("micBtn").classList.remove("live");
+  $("rStatus").textContent="";paintMarks();
+}
+function showMsg(t){const p=$("pop");p.innerHTML=`<div>${t}</div><div class="btns"><button class="chip" onclick="$('pop').style.display='none'">حسناً</button></div>`;p.style.display="block"}
+function showPop(g){
+  const w=R.words[g],m=R.marks[g],h=R.heardFor[g];
+  const label={ok:"✓ صحيحة",near:"⚠ قريبة — راجع النطق برواية ورش",bad:"✗ خطأ",miss:"✗ كلمة متروكة"}[m]||"لم تُقرأ بعد";
+  const p=$("pop");
+  p.innerHTML=`<div style="color:var(--muted)">${label} · الآية ${toAr(w.ayah)}</div>
+    <div>الصحيح (ورش): <span class="big">${w.raw}</span></div>
+    ${h&&m!=="ok"?`<div>سمعتُ: <b>${h}</b></div>`:""}
+    <div class="btns">
+      ${synced(st.sura)?`<button class="chip on" id="popPlay">▶ استمع للآية</button>`:""}
+      <button class="chip" id="popFrom">🎤 التسميع من هنا</button>
+      <button class="chip" id="popClose">إغلاق</button></div>`;
+  p.style.display="block";
+  $("popClose").onclick=()=>p.style.display="none";
+  $("popFrom").onclick=()=>{p.style.display="none";const was=R.on;if(was)stopRecite();resetRecite(g);startRecite()};
+  const pp=$("popPlay");if(pp)pp.onclick=()=>{p.style.display="none";if(R.on)stopRecite();const k=st.seq.findIndex(x=>x.ayah===w.ayah);if(k>=0){st.pos=k;st.repLeft=1;playCurrent()}};
+}
+$("micBtn").onclick=()=>R.on?stopRecite():startRecite();
+$("hideBtn").onclick=()=>{const on=$("text").classList.toggle("hidewords");$("hideBtn").classList.toggle("on",on);store.set("hide",on)};
+$("resetBtn").onclick=()=>{if(R.on)stopRecite();resetRecite(0);$("micBtn").textContent="🎤 ابدأ التسميع";$("rpanel").style.display="none"};
+if(store.get("hide",false)){$("text").classList.add("hidewords");$("hideBtn").classList.add("on")}
+
+// ---------- Boot ----------
+setRep();setLoop();setAuto();renderList();showContinue();
+const m=location.hash.match(/^#s(\d+)$/);
+if(m&&+m[1]>=1&&+m[1]<=114){history.replaceState({s:+m[1]},"",location.hash);openSura(+m[1],false)}
+else history.replaceState({},"",location.pathname);
+if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>
