@@ -1,5 +1,5 @@
-// Offline support: app shell + full Warsh text cached on install (audio needs internet).
-const SHELL = "warsh-shell-v2";
+// Offline support. Pages/scripts: network-first (updates show up immediately), cache as fallback offline.
+const SHELL = "warsh-shell-v4";
 const FILES = ["./", "index.html", "quran-data.js", "warsh.10.woff2", "manifest.json", "icon-180.png", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", e => {
@@ -13,14 +13,13 @@ self.addEventListener("activate", e => {
 });
 
 self.addEventListener("fetch", e => {
-  const url = new URL(e.request.url);
   if (e.request.method !== "GET") return;
-
-  // Audio streams straight from everyayah.com (not intercepted — iOS Safari needs native range requests).
-  if (url.hostname === "everyayah.com") return;
-
-  // App shell: cache-first, fall back to network
-  if (url.origin === location.origin) {
-    e.respondWith(caches.match(e.request, { ignoreSearch: true }).then(r => r || fetch(e.request)));
-  }
+  const url = new URL(e.request.url);
+  if (url.origin !== location.origin) return; // audio etc. go straight to the network
+  e.respondWith(
+    fetch(e.request).then(res => {
+      if (res.ok) { const copy = res.clone(); caches.open(SHELL).then(c => c.put(e.request, copy)); }
+      return res;
+    }).catch(() => caches.match(e.request, { ignoreSearch: true }))
+  );
 });

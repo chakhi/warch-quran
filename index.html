@@ -31,7 +31,7 @@ main{padding:12px 12px calc(env(safe-area-inset-bottom) + 150px)}
 .reader-title{text-align:center;margin:6px 0 10px}
 .reader-title .sname{font-size:34px;color:var(--accent)}
 .basmala{font-family:"Warsh",serif;text-align:center;font-size:28px;margin:4px 0 14px;color:var(--ink)}
-.text{font-family:"Warsh",serif;font-size:var(--fs,30px);line-height:2.15;text-align:justify;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.text{font-family:"Warsh",serif;font-size:var(--fs,30px);line-height:2.15;text-align:right;text-justify:none;letter-spacing:0;word-spacing:.12em;font-kerning:normal;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
 .aya{border-radius:8px;padding:0 2px;transition:background .2s}
 .aya.on{background:var(--hl)}
 .note{font-size:12px;color:var(--muted);text-align:center;margin:8px 0}
@@ -53,7 +53,26 @@ select{font-size:14px;padding:6px 8px;border-radius:8px;border:1px solid var(--l
 .srow{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);gap:10px}
 .srow:last-child{border:0}
 .srow input[type=range]{width:55%}
-.w{border-radius:6px;transition:background .2s,color .2s}
+/* Tajweed colours (Warsh) */
+.tj .w.t-lazim{color:#8e1b1b}
+.tj .w.t-muttasil{color:#d32f2f}
+.tj .w.t-munfasil{color:#e8730c}
+.tj .w.t-lin{color:#8e44ad}
+.tj .w.t-badal{color:#1565c0}
+.dark .tj .w.t-lazim{color:#ff6b6b}
+.dark .tj .w.t-muttasil{color:#ff8a80}
+.dark .tj .w.t-munfasil{color:#ffb74d}
+.dark .tj .w.t-lin{color:#ce93d8}
+.dark .tj .w.t-badal{color:#64b5f6}
+.wq{display:none}
+.tj .wq{display:inline;color:#2e7d32;font-weight:700}
+.dark .tj .wq{color:#81c784}
+.tj .wq.sj{color:#00838f}
+.legend{display:none;flex-wrap:wrap;gap:6px 12px;justify-content:center;font-size:12px;margin:0 0 10px;color:var(--muted)}
+.legend span::before{content:"●";margin-left:4px}
+.tjon .legend{display:flex}
+.lg-lazim::before{color:#8e1b1b}.lg-muttasil::before{color:#d32f2f}.lg-munfasil::before{color:#e8730c}.lg-lin::before{color:#8e44ad}.lg-badal::before{color:#1565c0}.lg-waqf::before{color:#2e7d32}
+.w{border-radius:6px;white-space:nowrap;transition:background .2s,color .2s}
 .w.ok{color:#1f7a4d}
 .dark .w.ok{color:#7cd3a5}
 .w.near{background:rgba(230,160,40,.28)}
@@ -98,6 +117,10 @@ select{font-size:14px;padding:6px 8px;border-radius:8px;border:1px solid var(--l
       <div class="score"><span style="color:#1f7a4d">✓ <span id="sOk">٠</span></span><span style="color:#c98a12">⚠ <span id="sNear">٠</span></span><span style="color:#b32020">✗ <span id="sBad">٠</span></span><span id="rStatus" style="font-weight:400;color:var(--muted)"></span></div>
       <div class="heard" id="heard"></div>
     </div>
+    <div class="legend" id="legend">
+      <span class="lg-lazim">مد لازم ٦</span><span class="lg-muttasil">مد متصل ٦</span><span class="lg-munfasil">مد منفصل ٦</span>
+      <span class="lg-badal">مد البدل ٢ أو ٤ أو ٦</span><span class="lg-lin">لين مهموز ٤ أو ٦</span><span class="lg-waqf">علامة الوقف</span>
+    </div>
     <div class="basmala" id="basmala">بِسْمِ اِ۬للَّهِ اِ۬لرَّحْمَٰنِ اِ۬لرَّحِيمِ</div>
     <div class="text" id="text"></div>
     <div class="note" id="syncNote"></div>
@@ -124,6 +147,7 @@ select{font-size:14px;padding:6px 8px;border-radius:8px;border:1px solid var(--l
   <h3>الإعدادات</h3>
   <div class="srow"><span>حجم الخط</span><input type="range" id="fs" min="20" max="48" step="1"></div>
   <div class="srow"><span>الوضع الليلي</span><button class="chip" id="darkBtn">تبديل</button></div>
+  <div class="srow"><span>تلوين المدود والوقف (ورش)</span><button class="chip" id="tjBtn">مفعّل</button></div>
   <div class="srow"><span>متابعة تلقائية للسورة التالية</span><button class="chip" id="autoNext">تشغيل</button></div>
   <div class="srow"><span>سرعة التلاوة</span><select id="rate"><option>0.75</option><option selected>1</option><option>1.25</option><option>1.5</option></select></div>
   <div class="note">النص: مجمع الملك فهد لطباعة المصحف الشريف (رواية ورش عن نافع) · الصوت: everyayah.com</div>
@@ -329,22 +353,64 @@ function cmp(h,e){
 }
 const tok=t=>{const st=strictForm(t);return {raw:t,strict:st,loose:looseForm(st)}};
 
+// ---- Warsh madd / waqf classification (per word, from the KFGQPC orthography marks) ----
+const MADDA="\u0653",SHADDA="\u0651",SUKUN="\u0652",HAMZA_MARK=/[\u0654\u0655]/;
+const isMark=c=>/[\u064B-\u065F\u0670\u06D6-\u06ED\u08F0-\u08FF]/.test(c);
+function clusters(w){
+  const out=[];for(const ch of w){if(isMark(ch)&&out.length)out[out.length-1].m+=ch;else out.push({b:ch,m:""})}
+  // drop trailing silent alef (قَالُوٓاْ) so the madd before it counts as end-of-word
+  while(out.length>1){const l=out[out.length-1];if(l.b==="\u0627"&&/[\u0652\u06DF]/.test(l.m))out.pop();else break}
+  return out}
+const isHamza=c=>c&&(/[\u0621\u0623\u0625\u0624\u0626]/.test(c.b)||HAMZA_MARK.test(c.m));
+function maddClass(word,firstOfSura){
+  const C=clusters(word),n=C.length;
+  const maddas=C.filter(c=>c.m.includes(MADDA)).length;
+  if(maddas&&firstOfSura)return "lazim";                     // الحروف المقطعة
+  let best=null;const rank={lazim:5,muttasil:4,munfasil:3,lin:2,badal:1};
+  const set=k=>{if(!best||rank[k]>rank[best])best=k};
+  for(let i=0;i<n;i++){
+    const c=C[i],nx=C[i+1];
+    if(c.m.includes(MADDA)){
+      if(c.b==="\u0623"){set("badal");continue}                 // أٓ = همز بعده ألف (ءا) → بدل
+      if(!nx)set("munfasil");                                    // آخر الكلمة والهمز في التي بعدها
+      else if(isHamza(nx))set("muttasil");
+      else set("lazim");                                         // سكون أو تشديد بعد حرف المد
+      continue;
+    }
+    // لين مهموز: فتحة ثم و/ي ساكنة ثم همز في الكلمة نفسها (شَيْء، سَوْءَ)
+    if(c.m.includes("\u064E")&&nx&&/[\u0648\u064A\u06D2]/.test(nx.b)&&nx.m.includes(SUKUN)&&isHamza(C[i+2]))set("lin");
+    // البدل: همز يليه حرف مد (ءَامنوا، إِيمان، أُوتوا) ما لم يسبق الهمزَ ساكنٌ صحيح (القرءان)
+    if(isHamza(c)&&!(i>0&&C[i-1].m.includes(SUKUN)&&!/[\u0648\u064A\u06D2\u0627]/.test(C[i-1].b))){
+      const v=c.m;
+      if(v.includes("\u0670")||(v.includes("\u064E")&&nx&&nx.b==="\u0627"&&!/[\u064B-\u0652]/.test(nx.m))||
+         (v.includes("\u064F")&&nx&&nx.b==="\u0648"&&!/[\u064B-\u0651]/.test(nx.m))||
+         (v.includes("\u0650")&&nx&&/[\u064A\u06D2]/.test(nx.b)&&!/[\u064B-\u0651]/.test(nx.m)))set("badal");
+    }
+  }
+  return best;
+}
+
 function renderWords(s){
   const W=[];let html="";
   s.a.forEach((t,i)=>{
     const parts=t.replace(/ /g," ").replace(/‏/g,"").split(/\s+/).filter(Boolean);
     html+=`<span class="aya" data-i="${i}">`;
-    parts.forEach(p=>{
+    parts.forEach((p,pi)=>{
       const tk=tok(p);
       if(!tk.loose&&!tk.strict){html+=p+" ";return}
-      tk.ayah=i+1;W.push(tk);
-      html+=`<span class="w" data-g="${W.length-1}">${p}</span> `;
+      tk.ayah=i+1;tk.tj=maddClass(p,i===0&&pi===0);W.push(tk);
+      // waqf (ۖ) and sajda (۩) signs: kept in the word normally; shown separately in colour when tajweed colouring is on
+      const hasW=p.includes("\u06D6"),hasS=p.includes("\u06E9");
+      const plain=p.replace(/[\u06D6\u06E9]/g,"");
+      tk.html=p;tk.plain=plain;
+      html+=`<span class="w" data-g="${W.length-1}">${p}</span>${hasW?'<span class="wq">\u00A0\u06D6</span>':""}${hasS?'<span class="wq sj">\u00A0\u06E9</span>':""} `;
     });
     html+="</span> ";
   });
   $("text").innerHTML=html;
-  R.words=W;resetRecite();
+  R.words=W;resetRecite();if(typeof applyTj==="function")applyTj();
 }
+
 
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 const R={on:false,rec:null,words:[],marks:[],heardFor:[],base:{ptr:0,marks:[],heardFor:[]},ptr:0,restarts:0};
@@ -381,7 +447,7 @@ function align(heardText){
 function paintMarks(){
   const els=$("text").querySelectorAll(".w");let ok=0,near=0,bad=0;
   els.forEach((el,k)=>{
-    const m=R.marks[k];el.className="w"+(m?" "+m:"")+(R.on&&k===R.ptr?" cur":"");
+    const m=R.marks[k],tj=R.words[k]&&R.words[k].tj;el.className="w"+(tj?" t-"+tj:"")+(m?" "+m:"")+(R.on&&k===R.ptr?" cur":"");
     if(m==="ok")ok++;else if(m==="near")near++;else if(m)bad++;
   });
   $("sOk").textContent=toAr(ok);$("sNear").textContent=toAr(near);$("sBad").textContent=toAr(bad);
@@ -429,6 +495,7 @@ function showPop(g){
   const p=$("pop");
   p.innerHTML=`<div style="color:var(--muted)">${label} · الآية ${toAr(w.ayah)}</div>
     <div>الصحيح (ورش): <span class="big">${w.raw}</span></div>
+    ${w.tj?`<div style="color:var(--muted)">التجويد: ${{lazim:"مد لازم — ٦ حركات",muttasil:"مد متصل — ٦ حركات عند ورش",munfasil:"مد منفصل — ٦ حركات عند ورش",lin:"لين مهموز — ٤ أو ٦ حركات",badal:"مد البدل — ٢ أو ٤ أو ٦ حركات"}[w.tj]}</div>`:""}
     ${h&&m!=="ok"?`<div>سمعتُ: <b>${h}</b></div>`:""}
     <div class="btns">
       ${synced(st.sura)?`<button class="chip on" id="popPlay">▶ استمع للآية</button>`:""}
@@ -442,6 +509,14 @@ function showPop(g){
 $("micBtn").onclick=()=>R.on?stopRecite():startRecite();
 $("hideBtn").onclick=()=>{const on=$("text").classList.toggle("hidewords");$("hideBtn").classList.toggle("on",on);store.set("hide",on)};
 $("resetBtn").onclick=()=>{if(R.on)stopRecite();resetRecite(0);$("micBtn").textContent="🎤 ابدأ التسميع";$("rpanel").style.display="none"};
+function applyTj(){
+  const on=store.get("tj",true);
+  $("text").classList.toggle("tj",on);$("reader").classList.toggle("tjon",on);
+  $("tjBtn").textContent=on?"مفعّل":"متوقف";$("tjBtn").classList.toggle("on",on);
+  // when colouring is on, the waqf sign is drawn by its own coloured span, so drop it from the word itself
+  $("text").querySelectorAll(".w").forEach(el=>{const w=R.words[+el.dataset.g];if(w)el.textContent=on?w.plain:w.html});
+}
+$("tjBtn").onclick=()=>{store.set("tj",!store.get("tj",true));applyTj()};
 if(store.get("hide",false)){$("text").classList.add("hidewords");$("hideBtn").classList.add("on")}
 
 // ---------- Boot ----------
