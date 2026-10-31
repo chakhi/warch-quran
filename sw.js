@@ -1,6 +1,6 @@
 // Offline support. Pages/scripts: network-first (updates show up immediately), cache as fallback offline.
-const SHELL = "warsh-shell-v4";
-const FILES = ["./", "index.html", "quran-data.js", "warsh.10.woff2", "manifest.json", "icon-180.png", "icon-192.png", "icon-512.png"];
+const SHELL = "warsh-shell-v5";
+const FILES = ["./", "index.html", "quran-data.js", "warsh.10.woff2", "scheherazade-quran.woff", "manifest.json", "icon-180.png", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(SHELL).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
